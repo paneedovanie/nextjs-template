@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id          String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt   DateTime      @default(now())
+  modifiedAt  DateTime      @default(now())
+  deletedAt   DateTime?
+  firstName   String
+  middleName  String?
+  lastName    String
+  userRoles   user_role[]
+  userPrivate user_private?
+  addresses   address[]
+  contacts    contact[]
+  companys    company[]
+  projects    project[]
+  investment  investment[]
+}
+
+model user_private {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt  DateTime  @default(now())
+  modifiedAt DateTime  @default(now())
+  deletedAt  DateTime?
+  username   String?
+  email      String    @unique
+  password   String
+  user       user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String    @unique @db.Uuid
+}
+
+model role {
+  id         Int         @id @default(autoincrement())
+  createdAt  DateTime    @default(now())
+  modifiedAt DateTime    @default(now())
+  deletedAt  DateTime?
+  name       String?
+  userRole   user_role[]
+}
+
+model user_role {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt DateTime @default(now())
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  role      role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    Int
+}
+
+model company {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt   DateTime  @default(now())
+  modifiedAt  DateTime  @default(now())
+  deletedAt   DateTime?
+  name        String
+  description String
+  addresses   address[]
+  contacts    contact[]
+  userId      String?   @db.Uuid
+  user        user?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  projects    project[]
+}
+
+model address {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @default(now())
+  userId     String?  @db.Uuid
+  user       user?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId  String?  @db.Uuid
+  company    company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  country    String
+  city       String
+  street     String
+  block      String
+}
+
+model category {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt  DateTime  @default(now())
+  modifiedAt DateTime  @default(now())
+  deletedAt  DateTime?
+  name       String
+  type       String
+  contact    contact[]
+}
+
+model contact {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt  DateTime  @default(now())
+  modifiedAt DateTime  @default(now())
+  categoryId String?   @db.Uuid
+  userId     String?   @db.Uuid
+  user       user?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId  String?   @db.Uuid
+  company    company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category   category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  value      String
+}
+
+model project {
+  id            String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt     DateTime         @default(now())
+  modifiedAt    DateTime         @default(now())
+  deletedAt     DateTime?
+  name          String
+  description   String
+  companyId     String           @db.Uuid
+  company       company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId        String?          @db.Uuid
+  user          user?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  startAt       DateTime
+  endAt         DateTime
+  budget        Decimal
+  commission    Decimal
+  status        String
+  investments   investment[]
+  projectOutput project_output[]
+}
+
+model investment {
+  id               String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt        DateTime            @default(now())
+  modifiedAt       DateTime            @default(now())
+  deletedAt        DateTime?
+  amount           Decimal
+  userId           String?             @db.Uuid
+  user             user?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  projectId        String              @db.Uuid
+  project          project             @relation(fields: [projectId], references: [id])
+  investmentOutput investment_output[]
+}
+
+model project_output {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt DateTime @default(now())
+  projectId String   @db.Uuid
+  project   project  @relation(fields: [projectId], references: [id])
+  amount    Decimal
+}
+
+model investment_output {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt    DateTime   @default(now())
+  investmentId String     @db.Uuid
+  invesment    investment @relation(fields: [investmentId], references: [id])
+  amount       Decimal
+}
